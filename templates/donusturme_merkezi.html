@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    
+    <h1>Dönüştürme Merkezi</h1>
+
+    <form method="POST" action="/donusturme-merkezi" enctype="multipart/form-data" class="form-container">
+        
+        <div class="form-group">
+            <label for="operation">1. Yapılacak İşlem:</label>
+            <select name="operation" id="operation" class="input-field">
+                <option value="png2jpg">PNG → JPG</option>
+                <option value="jpg2png">JPG → PNG</option>
+                <hr>
+                <option value="txt2pdf">TXT → PDF</option>
+                <option value="pdf2txt">PDF → TXT (Metin & Resim)</option>
+                <hr>
+                <option value="docx2txt">DOCX → TXT</option>
+                <option value="txt2docx">TXT → DOCX</option>
+                <hr>
+                <option value="excel2docx">Excel → Word (DOCX)</option>
+                <option value="excel2txt">Excel → TXT</option>
+                <hr>
+                <option value="pptx2ppsx">PPTX → PPSX (Slayt Gösterisi)</option>
+                <option value="ppsx2pptx">PPSX → PPTX (Sunum)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="file">2. Dosya Seç:</label>
+            <input type="file" id="file" name="file" required class="input-field">
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="button-convert">
+                DÖNÜŞTÜR VE İNDİR
+            </button>
+        </div>
+    </form>
+    
+    <hr style="border-color: #eee; margin-top: 25px; margin-bottom: 25px;">
+
+    {% if hata %}
+        <div class="hata-kutusu">
+            <strong>Hata:</strong> {{ hata }}
+        </div>
+    {% endif %}
+
+    <style>
+        .form-container {
+            padding: 0; 
+        }
+        .form-group {
+            margin-bottom: 20px; /* Her grup arası boşluk */
+        }
+        .form-group label {
+            display: block; /* Etiket üstte dursun */
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            color: #333; 
+        }
+        .input-field {
+            background-color: #f8f9fa; 
+            border: 1px solid #ced4da; 
+            color: #212529; 
+            
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 1em;
+            width: 100%; /* Bu telefonda %100 olmasını sağlar */
+            box-sizing: border-box; 
+            
+            /* Geniş ekranlarda aşırı uzamasın */
+            max-width: 600px; 
+        }
+        
+        /* Dosya seçme butonu için özel stil */
+        input[type="file"].input-field {
+            padding: 8px;
+        }
+        
+        .button-convert {
+            background-color: #007BFF; /* Mavi */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .button-convert:hover {
+            background-color: #0069d9;
+        }
+        
+        .hata-kutusu {
+            background-color: #491a1a;
+            border: 1px solid #dc3545;
+            color: #f8d7da;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+
+{% endblock %}

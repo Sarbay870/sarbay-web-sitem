@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h1>Dershaneler</h1>
+<hr>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Online Eğitim Servisleri</h2>
+    </div>
+    <div class="list-group">
+        {% if dershane_listesi %}
+            {% for dershane in dershane_listesi %}
+                <a href="{{ dershane.link }}" class="list-group-item drive-link">
+                    
+                    <span style="display: flex; align-items: center;">
+                        
+                        {% if dershane.logo %}
+                            <img src="{{ dershane.logo }}" alt="{{ dershane.ad }} Logosu" style="width: 24px; height: 24px; margin-right: 15px; border-radius: 4px;">
+                        {% endif %}
+
+                        <span style="font-size: 1.1em; font-weight: 600;">{{ dershane.ad }}</span>
+                    </span>
+
+                    <span class="btn btn-small btn-add" style="pointer-events: none;">Uygulamada Aç</span>
+                </a>
+            {% endfor %}
+        {% else %}
+            <div class="card-content">
+                <p class="yok">Kayıtlı dershane linki bulunamadı.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,46 @@
+<!-- YENİ DERSLER.HTML (Sarı Klasör Simgesi Geri Getirildi) -->
+{% extends "layout.html" %}
+
+{% block content %}
+
+<!-- 1. Başlık -->
+<h1>Dersler</h1>
+<hr>
+
+<!-- 2. Dosya Listesi (Yeni Kart Tasarımı) -->
+<div class="card">
+    <div class="card-header">
+        <h2>Dersler</h2>
+    </div>
+    <div class="list-group">
+        {% if dosya_listesi %}
+            {% for dosya in dosya_listesi %}
+                <!-- Her liste elemanı tıklanabilir bir karttır -->
+                <a href="{{ dosya.link }}" target="_blank" class="list-group-item drive-link">
+                    
+                    <span style="display: flex; align-items: center;">
+                        
+                        <!-- YENİ: Logo Yeri ve Geri Dönen Sarı Klasör Simgesi -->
+                        {% if dosya.logo %}
+                            <!-- Logo varsa, logoyu göster -->
+                            <img src="{{ dosya.logo }}" alt="{{ dosya.ad }} Logosu" style="width: 24px; height: 24px; margin-right: 15px; border-radius: 4px; object-fit: contain;">
+                        {% else %}
+                            <!-- Logo yoksa, sarı klasör emojisini göster -->
+                             <span style="font-size: 20px; margin-right: 15px;">📁</span>
+                        {% endif %}
+
+                        <!-- Dosya adı -->
+                        <span style="font-size: 1.1em;">{{ dosya.ad }}</span>
+                    </span>
+                    
+                </a>
+            {% endfor %}
+        {% else %}
+            <div class="card-content">
+                <p class="yok">'Dersler' klasörü boş veya bulunamadı.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

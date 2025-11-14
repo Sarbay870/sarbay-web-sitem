@@ -1,0 +1,340 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    
+<!-- === 👑 KRAL GÜNCELLEMESİ: EKSİK OLAN MODAL PENCERE STİLLERİ EKLENDİ 👑 === -->
+<style>
+    /* Modal Arka Planı */
+    .modal-overlay {
+        display: none; /* Başlangıçta gizli */
+        position: fixed; /* Sayfa kaysa bile yerinde kal */
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto; /* Gerekirse scroll et */
+        background-color: rgba(0,0,0,0.5); /* Yarı şeffaf siyah */
+        /* Ortalamak için flex */
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Modal İçerik Kutusu */
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 25px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 500px; /* Çok genişlemesin */
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        position: relative;
+    }
+
+    /* Kapatma Butonu (X) */
+    .modal-close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        position: absolute;
+        top: 10px;
+        right: 15px;
+    }
+    .modal-close:hover,
+    .modal-close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    /* Form elemanları için stiller */
+    .modal-content .form-group {
+        margin-bottom: 15px;
+    }
+    .modal-content .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+    }
+    .modal-content .form-group input[type="text"],
+    .modal-content .form-group input[type="date"],
+    .modal-content .form-group select,
+    .modal-content .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box; /* Padding'i hesaba kat */
+    }
+    .modal-content .btn-modal-submit {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+</style>
+<!-- === 👑 STİLLER BİTTİ 👑 === -->
+
+
+    <!-- 1. Karşılama Mesajı -->
+    <h1>{{ selamlama_mesaji }}</h1>
+    
+    <hr>
+    
+    <!-- 2. Yaklaşan Sınavlar -->
+    <div class="card" id="sinavlar-card">
+        <div class="card-header">
+            <h2>Yaklaşan Sınavlar</h2>
+            <div class="header-actions">
+                {% if sinav_listesi %}
+                    <button class="btn btn-small btn-delete toggle-delete-mode-btn">Sil</button>
+                {% endif %}
+                <!-- === 👑 HATA DÜZELTMESİ (1/4): Class adı değişti 👑 === -->
+                <!-- Bu buton "sinav-modal" ID'li pencereyi açacak -->
+                <button class="btn btn-small btn-add kral-sinav-ac-btn">Ekle</button>
+            </div>
+        </div>
+        
+        <div class="list-group">
+            {% if sinav_listesi %}
+                {% for sinav in sinav_listesi %}
+                    <div class="list-group-item" data-id="{{ sinav.id }}">
+                        <span>
+                            <strong>{{ sinav.ad }}</strong> - 
+                            {% if sinav.kalan_gun == 0 %}
+                                BUGÜN! 🔥
+                            {% else %}
+                                {{ sinav.kalan_gun }} gün kaldı
+                            {% endif %}
+                        </span>
+                        <!-- Silme ikonu (Silme modu aktifken JS ile görünür yapılır) -->
+                        <a href="{{ url_for('sil_sinav', sinav_id=sinav.id) }}" class="delete-icon" aria-label="Sınavı Sil">⛔️</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="card-content">
+                    <p class="yok">Yaklaşan sınav kaydı yok.
+                        <!-- === 👑 HATA DÜZELTMESİ (2/4): Class adı değişti 👑 === -->
+                        <!-- Bu link "sinav-modal" ID'li pencereyi açacak -->
+                        <a href="#" class="btn-inline-add kral-sinav-ac-btn">Şimdi Ekle</a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 3. Çalışma Takibi (Değişiklik yok) -->
+    <div class="card" id="calisma-card">
+        <div class="card-header">
+            <h2>Çalışma Takibi</h2>
+            <div class="header-actions">
+                {% if calisma_listesi %}
+                    <button class="btn btn-small btn-delete toggle-delete-mode-btn">Sil</button>
+                {% endif %}
+                <a href="{{ url_for('calisma_takibi_sayfasi') }}" class="btn btn-small btn-add">Ekle</a>
+            </div>
+        </div>
+        
+        <div class="list-group">
+            {% if calisma_listesi %}
+                {% for calisma in calisma_listesi %}
+                    <div class="list-group-item" data-id="{{ calisma.id }}">
+                        <span>{{ calisma.text }}</span>
+                        <a href="{{ url_for('sil_calisma', calisma_id=calisma.id) }}" class="delete-icon" aria-label="Çalışmayı Sil">⛔️</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="card-content">
+                    <p class="yok">Çalışma takibi eklemedin.
+                        <a href="{{ url_for('calisma_takibi_sayfasi') }}" class="btn-inline-add">Şimdi Ekle</a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+   <!-- 4. Notlar -->
+    <div class="card" id="notlar-card">
+        <div class="card-header">
+            <h2>Notlar</h2>
+            <div class="header-actions">
+                {% if not_listesi %}
+                    <button class="btn btn-small btn-delete toggle-delete-mode-btn">Sil</button>
+                {% endif %}
+                <!-- === 👑 HATA DÜZELTMESİ (3/4): Class adı değişti 👑 === -->
+                <!-- Bu buton "not-modal" ID'li pencereyi açacak -->
+                <button class="btn btn-small btn-add kral-not-ac-btn">Ekle</button>
+            </div>
+        </div>
+        
+        <div class="list-group">
+            {% if not_listesi %}
+                {% for not_ in not_listesi %}
+                    <div class="list-group-item" data-id="{{ not_.id }}">
+                        <span>{{ not_.text }}</span>
+                        <a href="{{ url_for('sil_not', not_id=not_.id) }}" class="delete-icon" aria-label="Notu Sil">⛔️</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="card-content">
+                    <p class="yok">Kayıtlı notun yok.
+                        <!-- === 👑 HATA DÜZELTMESİ (4/4): Class adı değişti 👑 === -->
+                        <!-- Bu link "not-modal" ID'li pencereyi açacak -->
+                        <a href="#" class="btn-inline-add kral-not-ac-btn">Şimdi Ekle</a>
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+
+<!-- === "SINAV EKLE" MODALI (Değişiklik yok) === -->
+<div id="sinav-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Yeni Sınav Ekle</h2>
+        
+        <form method="POST" action="{{ url_for('ekle_sinav') }}">
+            
+            <div class="form-group">
+                <label for="sinav_adi_select">Sınav Adı:</label>
+                <select id="sinav_adi_select" name="sinav_adi" required>
+                    <option value="" disabled selected>-- Ders Seçin --</option>
+                    {% if global_ders_listesi %}
+                        {% for ders in global_ders_listesi %}
+                            <option value="{{ ders }}">{{ ders }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="" disabled>Ders bulunamadı (app.py'yi kontrol et)</option>
+                    {% endif %}
+                    <option value="Diğer">Diğer (Manuel Gir)</option>
+                </select>
+                
+                <input type="text" id="sinav_adi_manual" name="sinav_adi_manual" placeholder="Sınav adını buraya yazın..." style="margin-top: 10px; display: none;">
+            </div>
+
+            <div class="form-group">
+                 <label for="sinav_tarihi_input">Tarih:</label>
+                <input id="sinav_tarihi_input" type="date" name="sinav_tarihi" required>
+            </div>
+            
+            <button type="submit" class="btn btn-add btn-modal-submit">Sınavı Kaydet</button>
+        </form>
+    </div>
+</div>
+<!-- === SINAV MODALI BİTTİ === -->
+
+
+<!-- === "NOT EKLE" MODALI (Değişiklik yok) === -->
+<div id="not-modal" class="modal-overlay">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Yeni Not Ekle</h2>
+        
+        <form method="POST" action="{{ url_for('ekle_not') }}">
+            <div class="form-group">
+                <label for="not_text_area">Notunuz:</label>
+                <textarea id="not_text_area" name="not_text" rows="5" placeholder="Hızlı notunuzu buraya yazın..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-add btn-modal-submit">Notu Kaydet</button>
+        </form>
+    </div>
+</div>
+<!-- === NOT MODALI BİTTİ === -->
+
+
+<!-- === 👑 KRAL GÜNCELLEMESİ: MODAL'LARI ÇALIŞTIRAN JAVASCRIPT 👑 === -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- Modal Temel Çalıştırma Mantığı ---
+        const sinavModal = document.getElementById('sinav-modal');
+        const notModal = document.getElementById('not-modal');
+        const modals = [sinavModal, notModal];
+        const closeButtons = document.querySelectorAll('.modal-close');
+
+        // === 👑 HATA DÜZELTMESİ: Artık yeni class adını dinliyor 👑 ===
+        // "Sınav Ekle" butonlarını (.kral-sinav-ac-btn) bul ve modalı aç
+        document.querySelectorAll('.kral-sinav-ac-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault(); // Linkin tıklamasını engelle
+                sinavModal.style.display = 'flex'; // flex (ortalamak için)
+            });
+        });
+
+        // === 👑 HATA DÜZELTMESİ: Artık yeni class adını dinliyor 👑 ===
+        // "Not Ekle" butonlarını (.kral-not-ac-btn) bul ve modalı aç
+        document.querySelectorAll('.kral-not-ac-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                notModal.style.display = 'flex';
+            });
+        });
+
+        // Kapatma (X) butonlarına tıklandığında
+        closeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.modal-overlay').style.display = 'none';
+            });
+        });
+
+        // Arka plana (overlay) tıklandığında
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.style.display = 'none';
+            }
+        });
+
+        // --- Sınav ComboBox "Diğer" seçeneği JS ---
+        // (Bu kod doğru, dokunulmadı)
+        const select = document.getElementById('sinav_adi_select');
+        const manualInput = document.getElementById('sinav_adi_manual');
+        const sinavForm = select.closest('form');
+
+        if (select) { 
+            select.addEventListener('change', function() {
+                if (this.value === 'Diğer') {
+                    manualInput.style.display = 'block';
+                    manualInput.setAttribute('name', 'sinav_adi'); 
+                    select.removeAttribute('name'); 
+                    manualInput.focus();
+                } else {
+                    manualInput.style.display = 'none';
+                    manualInput.removeAttribute('name');
+                    select.setAttribute('name', 'sinav_adi'); 
+                }
+            });
+
+            if (sinavForm) {
+                sinavForm.addEventListener('submit', function(e) {
+                    if (select.value === 'Diğer' && manualInput.value.trim() === '') {
+                        e.preventDefault(); 
+                        manualInput.style.borderColor = 'red';
+                    }
+                });
+            }
+        }
+        
+        // --- Silme Modu Toggle Mantığı ---
+        // (Bu kod doğru, dokunulmadı)
+        document.querySelectorAll('.toggle-delete-mode-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const card = this.closest('.card');
+                const deleteIcons = card.querySelectorAll('.delete-icon');
+                
+                deleteIcons.forEach(icon => {
+                    icon.style.display = (icon.style.display === 'inline' ? 'none' : 'inline');
+                });
+            });
+        });
+
+    });
+</script>
+<!-- === 👑 JAVASCRIPT BİTTİ 👑 === -->
+
+{% endblock %}

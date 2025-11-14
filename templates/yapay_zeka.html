@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h1>Yapay Zekalar</h1>
+<hr>
+
+<div class="card">
+    <div class="card-header">
+        <h2>AI Servisleri</h2>
+    </div>
+    <div class="list-group">
+        {% if ai_listesi %}
+            {% for ai in ai_listesi %}
+                <a href="{{ ai.link }}" target="_blank" class="list-group-item drive-link">
+                    
+                    <span style="display: flex; align-items: center;">
+                        
+                        {% if ai.logo %}
+                            <img src="{{ ai.logo }}" alt="{{ ai.ad }} Logosu" style="width: 24px; height: 24px; margin-right: 15px; border-radius: 4px; object-fit: contain;">
+                        {% else %}
+                             <span style="font-size: 20px; margin-right: 15px;">🤖</span>
+                        {% endif %}
+
+                        <span style="font-size: 1.1em;">{{ ai.ad }}</span>
+                    </span>
+                    
+                    <span class="btn btn-small btn-add" style="pointer-events: none;">Uygulamada Aç</span>
+
+                </a>
+            {% endfor %}
+        {% else %}
+            <div class="card-content">
+                <p class="yok">Listelenecek AI servisi bulunamadı.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

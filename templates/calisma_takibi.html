@@ -1,0 +1,325 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<style>
+    /* ... Önceki stiller ... */
+    .form-row {
+        display: flex;
+        flex-wrap: wrap; /* Mobil için kaydır */
+        gap: 20px;
+        margin-bottom: 15px;
+    }
+    .form-group {
+        flex-grow: 1;
+        min-width: 0;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #333;
+    }
+    .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+    .btn-submit {
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .list-group-item span {
+        color: #333;
+    }
+    .list-group-item.selected {
+        background-color: #5a67d8;
+        border-left: 5px solid #2563eb;
+        padding-left: 20px;
+    }
+    .list-group-item.selected span, .list-group-item.selected small, .list-group-item.selected strong {
+        color: #fff !important;
+    }
+
+    /* === 👑 KRAL GÜNCELLEMESİ: YENİ AĞAÇ (TREE) STİLLERİ 👑 === */
+    .calisma-container {
+        display: flex;
+        flex-wrap: wrap; /* Mobil için kaydır */
+        gap: 20px;
+    }
+    .calisma-form-bolumu {
+        flex: 2; /* Form 2 birim yer kaplasın */
+        min-width: 300px; /* Mobil için minimum genişlik */
+    }
+    .calisma-agac-bolumu {
+        flex: 1; /* Ağaç 1 birim yer kaplasın */
+        min-width: 250px; /* Mobil için minimum genişlik */
+        max-height: 480px; /* Yüksekliğini artırdık */
+        overflow-y: auto;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .agac-listesi {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    .agac-listesi ul {
+        list-style-type: none;
+        padding-left: 20px;
+    }
+    .agac-listesi li {
+        margin-bottom: 5px;
+    }
+    .agac-listesi .agac-dal { /* Bölüm veya Ders (Klasör) */
+        font-weight: bold;
+        cursor: pointer;
+        color: #333;
+    }
+    .agac-listesi .agac-dal::before {
+        content: '📁 '; /* Klasör ikonu */
+    }
+    .agac-listesi .agac-yaprak { /* Konu (Dosya) */
+        cursor: pointer;
+        color: #007bff; /* Tıklanabilir renk */
+    }
+    .agac-listesi .agac-yaprak:hover {
+        text-decoration: underline;
+    }
+    .agac-listesi .agac-yaprak::before {
+        content: '📄 '; /* Dosya ikonu */
+    }
+    .agac-listesi ul {
+        display: none; /* Başlangıçta kapalı */
+    }
+    .agac-listesi li.acik > ul {
+        display: block; /* Tıklanınca açılacak */
+    }
+    
+    /* === 👑 KRAL GÜNCELLEMESİ: SAAT ÇEVİRİCİ STİLLERİ 👑 === */
+    .saat-group {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end; /* Buton ve input'u alttan hizala */
+    }
+    .saat-group .form-group {
+        flex-grow: 0; /* Otomatik büyümesin */
+    }
+    .saat-group .btn-cevir {
+        padding: 10px 15px;
+        height: 40px; /* Input ile aynı yükseklik */
+        flex-shrink: 0; /* Küçülmesin */
+    }
+    
+</style>
+
+<!-- === 👑 KRAL GÜNCELLEMESİ: SAYFAYI İKİYE BÖLME 👑 === -->
+<div class="calisma-container">
+
+    <!-- BÖLÜM 1: FORM (SAAT ÇEVİRİCİ EKLENDİ) -->
+    <div class="calisma-form-bolumu">
+        <div class="card">
+            <div class="card-header">
+                <h2>Yeni Çalışma Kaydı Ekle</h2>
+            </div>
+            <div class="card-content">
+                <form method="POST" action="{{ url_for('calisma_takibi_sayfasi') }}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ders_adi">Ders Adı</label>
+                            <input type="text" id="ders_adi" name="ders_adi" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="konu_adi">Konu Adı</label>
+                            <input type="text" id="konu_adi" name="konu_adi" required>
+                        </div>
+                    </div>
+                    
+                    <!-- === 👑 KRAL GÜNCELLEMESİ: SAAT VE DAKİKA GRUBU 👑 === -->
+                    <div class="form-row saat-group">
+                        <div class="form-group" style="flex-grow: 1;">
+                            <label for="saat_input">Saat</label>
+                            <!-- Saat girmek için yeni kutu -->
+                            <input type="number" id="saat_input" min="0" step="any" placeholder="Örn: 1.5">
+                        </div>
+                        <div class="form-group" style="flex-grow: 0;">
+                            <!-- Bu buton formu göndermez (type="button") -->
+                            <button type="button" id="btn_saat_cevir" class="btn btn-neutral btn-cevir">Dakikaya Çevir</button>
+                        </div>
+                        <div class="form-group" style="flex-grow: 1;">
+                            <label for="sure_dk">Süre (dk)</label>
+                            <input type="number" id="sure_dk" name="sure_dk" min="1" required placeholder="0">
+                        </div>
+                    </div>
+                    <!-- === 👑 GÜNCELLEME BİTTİ 👑 === -->
+
+                    <button type="submit" class="btn btn-add btn-submit">Kaydet</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- BÖLÜM 2: HIZLI EKLE AĞACI (Bu zaten tam istediğin gibiydi) -->
+    <div class="calisma-agac-bolumu">
+        <h3 style="margin-top: 0; padding-bottom: 5px; border-bottom: 1px solid #ccc;">Hızlı Ekle (Çalışma)</h3>
+        
+        <!-- app.py'den gelen 'calisma_data_agaci' verisini kullanarak ağacı çizer -->
+        {% if calisma_data_agaci and 'Hata' not in calisma_data_agaci %}
+            <ul class="agac-listesi">
+                {% for bolum, dersler in calisma_data_agaci.items() %}
+                    <!-- Bölüm (Sözel, Sayısal vb.) -->
+                    <li onclick="agacTikla(event)">
+                        <span class="agac-dal">{{ bolum }}</span>
+                        <ul>
+                            {% for ders, konular in dersler.items() %}
+                                <!-- Ders (Matematik, Fizik vb.) -->
+                                <li onclick="agacTikla(event)">
+                                    <span class="agac-dal">{{ ders }}</span>
+                                    <ul>
+                                        {% for konu in konular %}
+                                            <!-- Konu (Limit.txt, Türev.txt vb.) -->
+                                            <li class="agac-yaprak" 
+                                                onclick="konuSec(event, '{{ ders }}', '{{ konu }}')">
+                                                {{ konu }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% elif 'Hata' in calisma_data_agaci %}
+             <p class="yok">{{ calisma_data_agaci['Hata'][0] }}</p>
+        {% else %}
+            <p class="yok">'Çalışma' klasöründe (Bölüm/Ders/Konu.txt) formatında içerik bulunamadı.</p>
+        {% endif %}
+    </div>
+
+</div>
+<!-- === 👑 SAYFA BÖLÜNME BİTTİ 👑 === -->
+
+<br>
+
+<!-- LİSTE KISMI (Değişmedi) -->
+<div class="card">
+    <div class="card-header" style="justify-content: space-between;">
+        <h2>Tüm Çalışmalar</h2>
+        <button id="btn-sil-calisma" class="btn btn-small btn-delete">Seçili Kaydı Sil</button>
+    </div>
+    <div class="list-group" id="calisma-listesi-container">
+        {% if calisma_listesi %}
+            {% for calisma in calisma_listesi %}
+                <!-- data-id ve tıklama olayı için sınıf -->
+                <div class="list-group-item selectable-item" data-id="{{ calisma.id }}">
+                    <span>
+                        <strong>{{ calisma.ders }}</strong>: {{ calisma.konu }} ({{ calisma.sure }} dk)
+                        <small style="color: #666; margin-left: 10px;">- {{ calisma.tarih }}</small>
+                    </span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="card-content">
+                <p class="yok">Henüz kayıtlı bir çalışma yok.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<!-- JAVASCRIPT KODU (Seçme, Silme ve YENİ SAAT ÇEVİRİCİ) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Seçili öğenin ID'sini tutacak değişken
+        let selectedItemId = null;
+        
+        // Tüm seçilebilir öğeleri ve butonları al
+        const items = document.querySelectorAll('.selectable-item');
+        const deleteButton = document.getElementById('btn-sil-calisma');
+        
+        // 1. Seçim Olayı
+        items.forEach(item => {
+            item.addEventListener('click', function() {
+                items.forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedItemId = this.getAttribute('data-id');
+            });
+        });
+        
+        // 2. Silme Olayı
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function() {
+                
+                if (!selectedItemId) {
+                    console.log("Silme hatası: Seçili ID yok."); // alert yerine console
+                    return;
+                }
+
+                if (selectedItemId === 'silinemez' || selectedItemId.startsWith('silinemez_') || selectedItemId.startsWith('list_item_')) {
+                    console.log("Silme hatası: Bu kayıt silinemez."); // alert yerine console
+                    return;
+                }
+
+                // Silme işlemi için ID'yi yolla
+                window.location.href = '{{ url_for("sil_calisma", calisma_id="PLACEHOLDER") }}'.replace('PLACEHOLDER', selectedItemId);
+            });
+        }
+        
+        // === 👑 KRAL GÜNCELLEMESİ: SAAT ÇEVİRİCİ JS 👑 ===
+        const saatInput = document.getElementById('saat_input');
+        const dakikaInput = document.getElementById('sure_dk');
+        const cevirButonu = document.getElementById('btn_saat_cevir');
+
+        if (cevirButonu) {
+            cevirButonu.addEventListener('click', function() {
+                // Değerleri al, boşsa 0 say
+                let saatDegeri = parseFloat(saatInput.value) || 0;
+                let mevcutDakika = parseInt(dakikaInput.value) || 0;
+                
+                // ŞAK ŞAK ŞAK! 60 ile çarp
+                let eklenecekDakika = Math.round(saatDegeri * 60);
+                
+                // Mevcut dakikaya ekle ve sonucu yaz
+                dakikaInput.value = mevcutDakika + eklenecekDakika;
+                
+                // Saat kutusunu temizle
+                saatInput.value = '';
+            });
+        }
+        // === 👑 JS GÜNCELLEMESİ BİTTİ 👑 ===
+    });
+
+    // === AĞAÇ (TREE) JAVASCRIPT'İ (Değişmedi) ===
+
+    // Ağaç dallarını (klasörleri) açıp kapar
+    function agacTikla(event) {
+        const li = event.currentTarget; // Tıklanan <li>
+        li.classList.toggle('acik');
+        event.stopPropagation();
+    }
+
+    // Ağaç yaprağına (konuya) tıklanınca formu doldurur
+    function konuSec(event, dersAdi, konuAdi) {
+        const dersInput = document.getElementById('ders_adi');
+        const konuInput = document.getElementById('konu_adi');
+        
+        // ŞAK diye doldur!
+        if (dersInput) {
+            dersInput.value = dersAdi;
+        }
+        if (konuInput) {
+            konuInput.value = konuAdi;
+        }
+        
+        event.stopPropagation();
+    }
+    // === 👑 JAVASCRIPT BİTTİ 👑 ===
+</script>
+
+{% endblock %}

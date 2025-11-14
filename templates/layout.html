@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SARBAY Paneli</title>
+
+    <style>
+        /* --- GENEL AYARLAR --- */
+        body{
+            font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+            margin:0;padding:0;background:#f4f7f6;color:#333;overflow-x:hidden;
+        }
+
+        /* --- ANA YAPI --- */
+        .page-container{
+            display:flex;width:100%;min-height:100vh;
+            transition: margin-right .5s cubic-bezier(0.77,0,0.175,1);
+        }
+
+        /* --- İÇERİK --- */
+        .content-wrap{
+            flex-grow:1;width:100%;box-sizing:border-box;padding:30px;
+            opacity:0; /* sayfa animasyonu için */
+        }
+
+        /* --- HAMBURGER BUTONU (SAĞDA, SABİT) --- */
+        .menu-toggle{
+            position:fixed;top:20px;
+            right:20px; 
+            width:30px;height:24px;
+            background:none;border:none;cursor:pointer;
+            z-index: 2001; /* Her zaman en üstte */
+            padding:0;
+        }
+        .menu-toggle span{
+            display:block;width:100%;height:3px;background:#333;margin-bottom:5px;
+            border-radius:3px;
+            transition:transform .5s cubic-bezier(0.77,0,0.175,1), opacity .2s ease;
+        }
+        .menu-toggle span:last-child{ margin-bottom:0; }
+
+        
+        /* 360 DERECE DÖNME ANİMASYONU */
+        .menu-toggle.open span {
+            transform: rotate(360deg);
+        }
+
+        /* --- SIDEBAR (SAĞ) --- */
+        .sidebar{
+            width:260px;background:#fff;
+            border-left:1px solid #ddd;
+            position:fixed;top:0;
+            right:0; 
+            height:100vh;z-index:1500; /* Düğme (2001) bunun üstünde kalacak */
+            padding:20px;box-sizing:border-box;
+            transform:translateX(100%); /* Sağda gizli */
+            transition:transform .5s cubic-bezier(0.77,0,0.175,1), box-shadow .3s ease;
+        }
+        .sidebar h2{
+            margin-top:10px;color:#1a1a1a;border-bottom:2px solid #5a67d8;padding-bottom:10px;
+        }
+        .sidebar ul{ list-style:none;margin:20px 0 0 0;padding:0; }
+        .sidebar li{
+            margin-bottom:5px;opacity:0;
+            transform:translateX(40px); /* Sağdan gelsin */
+            transition:opacity .3s ease-out, transform .3s ease-out;
+        }
+        .sidebar li a{
+            display:block;padding:12px 15px;text-decoration:none;color:#444;border-radius:5px;
+            transition:background-color .2s ease,color .2s ease;
+        }
+        .sidebar li a:hover{ background:#eef2f7;color:#000; }
+
+        /* --- AÇIK DURUM (SAĞ MENÜ) --- */
+        body.sidebar-open .sidebar{
+            transform:translateX(0); 
+            box-shadow:-5px 0 15px rgba(0,0,0,.1);
+        }
+        
+        /* Düğmenin sola kayma kodu SİLİNDİ (Artık sabit kalıyor) */
+
+        /* Ekran 500px'den büyükse, içeriği menü kadar sola itsin */
+        @media (min-width: 500px) {
+            body.sidebar-open .page-container{ margin-right:260px; } 
+        }
+
+        body.sidebar-open .sidebar li{ opacity:1; transform:translateX(0); }
+        body.sidebar-open .sidebar li:nth-child(1){ transition-delay:.1s; }
+        body.sidebar-open .sidebar li:nth-child(2){ transition-delay:.15s; }
+        body.sidebar-open .sidebar li:nth-child(3){ transition-delay:.2s; }
+        body.sidebar-open .sidebar li:nth-child(4){ transition-delay:.25s; }
+        body.sidebar-open .sidebar li:nth-child(5){ transition-delay:.3s; }
+        body.sidebar-open .sidebar li:nth-child(6){ transition-delay:.35s; }
+        body.sidebar-open .sidebar li:nth-child(7){ transition-delay:.4s; }
+        body.sidebar-open .sidebar li:nth-child(8){ transition-delay:.45s; } /* Akıllı Tarayıcı */
+
+        /* --- Responsive (SAĞ MENÜ) --- */
+        @media (max-width:767px){
+            .content-wrap{ padding:15px; }
+            .menu-toggle{ 
+                top:15px; 
+                right:15px; 
+            }
+            /* Düğmenin kayma responsive kodu da SİLİNDİ */
+        }
+
+        /* --- Kartlar / Liste (DOKUNULMADI) --- */
+        .card{ background:#fff;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.05);margin-bottom:25px;overflow:hidden; }
+        .card .card-content{ padding:25px; }
+        .list-group{ margin:0;padding:0; }
+        .list-group-item{
+            padding:15px 25px;border-bottom:1px solid #e0e0e0;font-size:1.05em;
+            display:flex;justify-content:space-between;align-items:center;text-decoration:none;
+        }
+        .list-group-item:last-child{ border-bottom:none; }
+        .yok{ color:#888;font-style:italic; }
+        h1{ font-size:2em;color:#1a1a1a;margin-bottom:15px; }
+        h2{ font-size:1.5em;color:#333;margin-top:0; }
+        hr{ border:0;border-top:1px solid #ddd;margin:25px 0; }
+
+        /* --- Butonlar & Modal (DOKUNULMADI) --- */
+        .card-header{ display:flex;justify-content:space-between;align-items:center;padding:20px 25px;border-bottom:1px solid #eee; }
+        .card-header h2{ margin:0;border:none;padding:0; }
+        .card-header .header-actions{ display:flex;align-items:center; }
+
+        .btn{ padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:.9em;font-weight:600;transition:all .3s;white-space:nowrap; }
+        .btn-small{ padding:5px 10px;font-size:.8em; }
+        .btn-add{ background:#5a67d8;color:#fff;margin-left:10px; }
+        .btn-add:hover{ background:#434190; }
+        .btn-delete{ background:#e53e3e;color:#fff; }
+        .btn-delete:hover{ background:#c53030; }
+        .btn-inline-add{ color:#5a67d8;text-decoration:none;font-weight:600;margin-left:10px; }
+        .btn-inline-add:hover{ text-decoration:underline; }
+
+        .modal{ display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;overflow:auto;background:rgba(0,0,0,.5); }
+        .modal-content{ background:#fefefe;margin:15% auto;padding:25px;border:1px solid #888;border-radius:8px;width:80%;max-width:500px;position:relative;box-shadow:0 5px 15px rgba(0,0,0,.3); }
+        .modal-close{ color:#aaa;position:absolute;top:10px;right:20px;font-size:28px;font-weight:bold;cursor:pointer; }
+        .modal-close:hover{ color:#000; }
+        .modal-form label{ display:block;margin-bottom:8px;font-weight:600; }
+        .modal-form input[type="text"], .modal-form input[type="date"], .modal-form textarea{
+            width:100%;padding:10px;margin-bottom:15px;border:1px solid #ccc;border-radius:5px;box-sizing:border-box;
+        }
+
+        .delete-icon{ display:none;font-size:1.2em;text-decoration:none;color:#e53e3e;opacity:.7;transition:opacity .2s; }
+        .delete-icon:hover{ opacity:1; }
+        .card.delete-mode .delete-icon{ display:block; }
+        .card.delete-mode .btn-delete{ background:#3182ce; }
+        .card.delete-mode .btn-delete:hover{ background:#2b6cb0; }
+        .card.delete-mode .btn-add{ width:0;padding-left:0;padding-right:0;margin-left:0;opacity:0; }
+
+        /* --- Sayfa geçiş animasyonları (DOKUNULMADI) --- */
+        .fade-in{ animation:fadeIn .4s ease-out forwards; }
+        .slide-in-bottom{ animation:slideInBottom .5s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .slide-in-top{ animation:slideInTop .5s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+        @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+        @keyframes slideInBottom{ from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideInTop{ from{opacity:0;transform:translateY(-40px)} to{opacity:1;transform:translateY(0)} }
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <main class="content-wrap">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<button class="menu-toggle" aria-label="Menüyü aç/kapat" aria-expanded="false">
+    <span></span><span></span><span></span>
+</button>
+
+<nav class="sidebar" aria-label="SARBAY menü">
+    <h2>SARBAY Menü</h2>
+    <ul>
+        <li><a href="{{ url_for('ana_sayfa') }}" data-index="1">Ana Ekran</a></li>
+        <li><a href="{{ url_for('dersler_sayfasi') }}" data-index="2">Dersler</a></li>
+        <li><a href="{{ url_for('dershaneler_sayfasi') }}" data-index="3">Dershaneler</a></li>
+        <li><a href="{{ url_for('calisma_takibi_sayfasi') }}" data-index="4">Çalışma Takibi</a></li>
+        <li><a href="{{ url_for('akilli_tarayici_sayfasi') }}" data-index="5">Akıllı Tarayıcı</a></li>
+        <li><a href="{{ url_for('yapay_zeka_sayfasi') }}" data-index="6">Yapay Zekalar</a></li>
+        <li><a href="{{ url_for('test_kitaplari_sayfasi') }}" data-index="7">Test Kitapları</a></li>
+        <li><a href="{{ url_for('donusturme_merkezi_sayfasi') }}" data-index="8">Dönüştürme Merkezi</a></li>
+    </ul>
+</nav>
+
+<div id="not-ekle-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" id="not-modal-close">&times;</span>
+        <h2>Yeni Not Ekle</h2>
+        <form class="modal-form" action="{{ url_for('ekle_not') }}" method="POST">
+            <label for="not_text">Notunuz:</label>
+            <textarea id="not_text" name="not_text" rows="4" required></textarea>
+            <button type="submit" class="btn btn-add">Kaydet</button>
+        </form>
+    </div>
+</div>
+
+<div id="sinav-ekle-modal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" id="sinav-modal-close">&times;</span>
+        <h2>Yeni Sınav Ekle</h2>
+        <form class="modal-form" action="{{ url_for('ekle_sinav') }}" method="POST">
+            <label for="sinav_adi">Sınav Adı:</label>
+            <input type="text" id="sinav_adi" name="sinav_adi" required>
+            <label for="sinav_tarihi">Tarih:</label>
+            <input type="date" id="sinav_tarihi" name="sinav_tarihi" required>
+            <button type="submit" class="btn btn-add">Kaydet</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // === Menü aç/kapat ===
+    const menuButton = document.querySelector('.menu-toggle');
+    if (menuButton){
+        menuButton.addEventListener('click', function(){
+            document.body.classList.toggle('sidebar-open');
+            const open = document.body.classList.contains('sidebar-open');
+            this.classList.toggle('open', open); // 'open' sınıfını ekleyip çıkar (animasyon için)
+            this.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+    }
+
+    // === Modallar ===
+    const notModal = document.getElementById('not-ekle-modal');
+    const sinavModal = document.getElementById('sinav-ekle-modal');
+    const notModalClose = document.getElementById('not-modal-close');
+    const sinavModalClose = document.getElementById('sinav-modal-close');
+    document.querySelectorAll('.add-not-btn').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();notModal.style.display='block';}));
+    document.querySelectorAll('.add-sinav-btn').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();sinavModal.style.display='block';}));
+    if (notModalClose){ notModalClose.onclick = ()=>notModal.style.display='none'; }
+    if (sinavModalClose){ sinavModalClose.onclick = ()=>sinavModal.style.display='none'; }
+    window.onclick = (e)=>{
+        if (e.target===notModal) notModal.style.display='none';
+        if (e.target===sinavModal) sinavModal.style.display='none';
+    };
+
+    // === Silme modu ===
+    document.querySelectorAll('.toggle-delete-mode-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            const card = btn.closest('.card');
+            if(!card) return;
+            card.classList.toggle('delete-mode');
+            btn.textContent = card.classList.contains('delete-mode') ? 'Bitti' : 'Sil';
+        });
+    });
+
+    // === Yönlü sayfa animasyonu ===
+    const sidebarLinks = document.querySelectorAll('.sidebar ul li a[data-index]');
+    sidebarLinks.forEach(link=>{
+        link.addEventListener('click',function(){
+            sessionStorage.setItem('nextPageIndex', this.getAttribute('data-index'));
+        });
+    });
+
+    const contentWrap = document.querySelector('.content-wrap');
+    const nextPageIndex = sessionStorage.getItem('nextPageIndex');
+    const currentPageIndex = sessionStorage.getItem('currentPageIndex');
+    let pageIndexToSet = 0;
+
+    if (nextPageIndex){
+        const nextNum = parseInt(nextPageIndex);
+        const currentNum = parseInt(currentPageIndex);
+        pageIndexToSet = nextNum;
+
+        if (currentNum && nextNum > currentNum){
+            contentWrap.classList.add('slide-in-bottom');
+        }else if (currentNum && nextNum < currentNum){
+            contentWrap.classList.add('slide-in-top');
+        }else{
+            contentWrap.classList.add('fade-in');
+        }
+        sessionStorage.removeItem('nextPageIndex');
+    }else{
+        contentWrap.classList.add('fade-in');
+        const currentPath = window.location.pathname;
+        const activeLink = document.querySelector(`.sidebar a[href='${currentPath}']`);
+        if (activeLink) pageIndexToSet = parseInt(activeLink.getAttribute('data-index'));
+        else if (currentPath==='/') pageIndexToSet = 1;
+    }
+    if (pageIndexToSet>0){
+        sessionStorage.setItem('currentPageIndex', pageIndexToSet.toString());
+    }
+});
+</script>
+</body>
+</html>

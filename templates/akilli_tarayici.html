@@ -1,0 +1,166 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<style>
+    .scan-options {
+        display: flex;
+        flex-wrap: wrap; /* Mobil için */
+        gap: 20px;
+        margin-bottom: 20px;
+        justify-content: center;
+    }
+    .scan-options label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.1em;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+    .scan-options input[type="radio"]:checked + span {
+        color: #5a67d8;
+        font-weight: 600;
+    }
+    .scan-options input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        accent-color: #5a67d8;
+    }
+    .file-upload-label {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background-color: #5a67d8; /* Mavi */
+        color: white;
+        text-align: center;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-bottom: 15px;
+        box-sizing: border-box; /* Önemli */
+    }
+    .file-upload-label:hover {
+        background-color: #434190;
+    }
+    input[type="file"] {
+        display: none; /* Gerçek butonu gizle */
+    }
+    #file-name {
+        text-align: center;
+        font-style: italic;
+        color: #555;
+        margin-bottom: 20px;
+    }
+    .btn-submit-scan {
+        width: 100%;
+        padding: 15px;
+        font-size: 1.2em;
+    }
+    
+    /* === 👑 KRAL İSTEĞİ: YENİ CHATGPT BUTON STİLİ 👑 === */
+    .btn-chatgpt {
+        display: block; /* Tam genişlik */
+        width: 100%;
+        padding: 12px;
+        background-color: #f0f4f8; /* Açık gri arka plan */
+        color: #10a37f; /* ChatGPT Yeşili */
+        border: 2px solid #10a37f; /* ChatGPT Yeşili kenarlık */
+        border-radius: 8px;
+        text-align: center;
+        font-size: 1.1em;
+        font-weight: 600;
+        margin-top: 15px; /* Üstteki butonla arasına boşluk */
+        text-decoration: none; /* Link alt çizgisini kaldır */
+        box-sizing: border-box;
+    }
+    .btn-chatgpt:hover {
+        background-color: #e6f8f5; /* Hover rengi */
+        color: #0c8266;
+    }
+    /* === 👑 Stil Bitti 👑 === */
+</style>
+<div class="card">
+    <div class="card-header">
+        <h2>Akıllı PDF Tarayıcı</h2>
+    </div>
+    <div class="card-content">
+        
+        <form method="POST" action="{{ url_for('akilli_tarayici_sayfasi') }}" enctype="multipart/form-data">
+            
+            <input type="hidden" name="form_type" value="pdf_scanner">
+            <p style="text-align: center; font-size: 1.1em; color: #333;">PDF'ten neyi taramak istiyorsun?</p>
+            <div class="scan-options">
+                <label>
+                    <input type="radio" name="scan_type" value="odevler" checked>
+                    <span>Sadece Ödevleri Tara (Notlara Ekle)</span>
+                </label>
+                <label>
+                    <input type="radio" name="scan_type" value="sinavlar">
+                    <span>Sadece Sınavları Tara (Takvime Ekle)</span>
+                </label>
+            </div>
+            <hr style="margin-bottom: 20px;">
+            
+            <label for="pdf-file-upload" class="file-upload-label">
+                1. PDF Dosyası Seç
+            </label>
+            <input id="pdf-file-upload" type="file" name="file" accept=".pdf" required>
+            <p id="file-name">Henüz dosya seçilmedi...</p>
+
+            <button type="submit" class="btn btn-add btn-submit-scan">2. Tara ve Kaydet</button>
+        </form>
+        
+        <a href="https://chat.openai.com/" target="_blank" class="btn-chatgpt">
+            🤖 ChatGPT'ye Soru Sor
+        </a>
+        </div>
+</div>
+
+<br>
+
+{% if error %}
+    <div class="card card-error">
+        <div class="card-content">
+            <p><strong>Tarama Hatası:</strong> {{ error }}</p>
+        </div>
+    </div>
+{% endif %}
+
+{% if kaydedildi_not or kaydedildi_sinav %}
+    <div class="card card-success">
+        <div class="card-content">
+            {% if kaydedildi_not %}
+                <p><strong>Başarılı!</strong> {{ homeworks | length }} adet ödev bulundu ve Notlar'a kaydedildi.</p>
+                <ul class="list-group">
+                    {% for hw in homeworks %}
+                        <li class="list-group-item"><span>{{ hw }}</span></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            
+            {% if kaydedildi_sinav %}
+                <p><strong>Başarılı!</strong> {{ exams | length }} adet sınav bulundu ve Yaklaşan Sınavlar'a kaydedildi.</p>
+                <ul class="list-group">
+                    {% for ex in exams %}
+                        <li class="list-group-item"><span><strong>{{ ex.ad }}</strong> (Tarih: {{ ex.tarih }})</span></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+
+<script>
+    document.getElementById('pdf-file-upload').addEventListener('change', function() {
+        var fileName = this.files[0] ? this.files[0].name : 'Henüz dosya seçilmedi...';
+        document.getElementById('file-name').textContent = fileName;
+    });
+</script>
+
+{% endblock %}
