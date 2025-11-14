@@ -1,0 +1,6 @@
+Flask
+gunicorn
+firebase-admin
+google-api-python-client
+PyMuPDF
+Pillow

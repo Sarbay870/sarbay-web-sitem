@@ -1,0 +1,8 @@
+# Gizli anahtarlar
+*.json
+
+# Yüklenen dosyalar
+uploads/
+
+# Python önbellek dosyaları
+__pycache__/
